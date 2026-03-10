@@ -307,10 +307,8 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
       if path == 'gitglossary'
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
+        resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
       end
-
-      resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
-
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
         x = /^linkgit:(\S+?)\[(\d+)\]/.match(line)
         relurl = "docs/#{x[1].gsub(/&#x2d;/, '-')}/#{lang}"
@@ -631,10 +629,8 @@ def index_doc(filter_tags, doc_list, get_content)
         if docname == 'gitglossary'
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
+          resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
         end
-
-        resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
-
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
           x = /^linkgit:+(\S+?)\[(\d+)\]/.match(line)
           if x[1] == "curl"
