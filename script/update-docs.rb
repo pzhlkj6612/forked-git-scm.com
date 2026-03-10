@@ -185,7 +185,8 @@ def embed_glossary_in_html(html, glossary_data_by_lang, lang = 'en')
     end
   end
 
-  glossary_html = "<script type=\"application/json\" id=\"glossary-data\">#{JSON.generate(used_glossary)}</script>\n"
+  glossary_json = JSON.generate(used_glossary).gsub('</', '<\/')
+  glossary_html = "<script type=\"application/json\" id=\"glossary-data\">#{glossary_json}</script>\n"
   glossary_html + html
 end
 
