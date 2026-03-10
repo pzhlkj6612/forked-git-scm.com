@@ -8,7 +8,7 @@ var GitGlossary = {
 
     // Glossary definitions are embedded as inline JSON by the
     // build script so that Hugo has resolved RelURL shortcodes directly.
-    const el = document.getElementById('glossary-data')
+    const el = document.getElementById('glossary-data');
     if (!el) {
       return;
     }
