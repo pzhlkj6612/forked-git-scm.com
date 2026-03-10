@@ -170,23 +170,23 @@ end
 # shortcodes. The page rendered by Hugo will have baseURL-aware links.
 def embed_glossary_to_html(html, glossary_data_by_lang, lang = 'en')
   current_glossary = glossary_data_by_lang[lang] || {}
-
-  return html if current_glossary.empty?
-
   used_glossary = {}
-  marked_html = html.gsub(/&lt;([^&]+)&gt;/) do |match|
-    term = $1
-    # Only mark and embed terms that exist in the glossary
-    if current_glossary.key?(term)
-      used_glossary[term] = current_glossary[term]
-      "<span class=\"hover-term\" data-term=\"#{term}\">&lt;#{term}&gt;</span>"
-    else
-      match
+
+  if !current_glossary.empty?
+    html = html.gsub(/&lt;([^&]+)&gt;/) do |match|
+      term = $1
+      # Only mark terms that exist in the glossary
+      if current_glossary.key?(term)
+        used_glossary[term] = current_glossary[term]
+        "<span class=\"hover-term\" data-term=\"#{term}\">&lt;#{term}&gt;</span>"
+      else
+        match
+      end
     end
   end
 
-  glossary_json = JSON.generate(used_glossary)
-  "<script type=\"application/json\" id=\"glossary-data\">#{glossary_json}</script>\n" + marked_html
+  glossary_html = "<script type=\"application/json\" id=\"glossary-data\">#{JSON.generate(used_glossary)}</script>\n"
+  glossary_html + html
 end
 
 def index_l10n_doc(filter_tags, doc_list, get_content)
