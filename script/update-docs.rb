@@ -168,7 +168,7 @@ end
 # The embedded JSON should be processed alone with the webpage
 # and "linkgit" should be converted to Hugo's {{< relurl "..." >}}
 # shortcodes. The page rendered by Hugo will have baseURL-aware links.
-def embed_glossary_to_html(html, glossary_data_by_lang, lang = 'en')
+def embed_glossary_in_html(html, glossary_data_by_lang, lang = 'en')
   current_glossary = glossary_data_by_lang[lang] || {}
   used_glossary = {}
 
@@ -283,7 +283,7 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
       else
-        html = embed_glossary_to_html(html, glossary_data_by_lang, lang)
+        html = embed_glossary_in_html(html, glossary_data_by_lang, lang)
       end
 
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
@@ -603,7 +603,7 @@ def index_doc(filter_tags, doc_list, get_content)
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
         else
-          html = embed_glossary_to_html(html, glossary_data_by_lang, 'en')
+          html = embed_glossary_in_html(html, glossary_data_by_lang, 'en')
         end
 
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
