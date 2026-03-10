@@ -1,24 +1,17 @@
 var GitGlossary = {
-  data: null,
   term: null,
   tooltip: null,
 
   init: function() {
-    const language = document.querySelector("html")?.getAttribute("lang") || 'en';
-    $.getJSON(baseURLPrefix + 'js/glossary/' + language + '.json')
-      .done((data) => this.onDataLoaded(data));
-    window.addEventListener('resize', () => this.reposition())
-  },
-
-  onDataLoaded: function(data) {
-    this.data = data;
     const content = document.querySelector('#content');
+    if (!content) return;
 
     // Create the popover element
     document.body.insertAdjacentHTML('beforeend',
       '<div class="tooltip"><div class="tooltip-content"></div></div>'
     );
     this.tooltip = document.body.lastElementChild;
+    window.addEventListener('resize', () => this.reposition());
     this.attachHoverEvents(content);
   },
 
@@ -45,14 +38,14 @@ var GitGlossary = {
   },
 
   attachHoverEvents: function(content) {
-    let timeout = undefined;
-
     content.addEventListener('mouseover', (e) => {
       if (e.target.classList.contains('hover-term')) {
         console.log(this.term);
         this.term = e.target;
         const term = e.target.dataset.term;
-        const definition = this.data[term] || '';
+        // Definition HTML is embedded directly in the element by Hugo so that
+        // links use the correct baseURL-aware paths.
+        const definition = e.target.dataset.definition || '';
         const truncatedDefinition = this.truncateWords(definition, 60);
 
         const language = document.querySelector("html")?.getAttribute("lang") || 'en';
