@@ -164,8 +164,10 @@ def extract_glossary_from_html(content, lang = 'en')
   glossary
 end
 
-def embed_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
+def embed_glossary_to_html(html, glossary_data_by_lang, lang = 'en')
   current_glossary = glossary_data_by_lang[lang] || {}
+
+  return html if current_glossary.empty?
 
   marked_html = html.gsub(/&lt;([^&]+)&gt;/) do |match|
     term = $1
@@ -177,33 +179,11 @@ def embed_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
     end
   end
 
-  return marked_html if current_glossary.empty?
-
-  # Build a resolved glossary hash with Hugo RelURL shortcodes for all links.
-  # Use single-quoted shortcode arguments so the JSON serialiser (which uses
-  # double quotes for string delimiters) never needs to escape them.
-  resolved_glossary = {}
-  current_glossary.each do |term, definition|
-    resolved = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
-      cmd_raw = $1
-      section = $2
-      if cmd_raw == "curl"
-        "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
-      else
-        cmd = cmd_raw.gsub(/&#x2d;/, '-')
-        relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
-        check_paths.add(relurl)
-        "<a href='{{< relurl \"#{relurl}\" >}}'>#{cmd_raw}[#{section}]</a>"
-      end
-    end
-
-    resolved_glossary[term] = resolved
-  end
-
-  # Embed the entire glossary as a single inline JSON block.  Hugo will process
-  # all {{< relurl "..." >}} shortcodes in the content file, producing correct
-  # baseURL-aware links without duplicating definition HTML across span elements.
-  glossary_json = JSON.generate(resolved_glossary)
+  # Embed the entire glossary as a single inline JSON block.
+  # The embedded JSON should be processed alone with the webpage
+  # and "linkgit" should be converted to Hugo's {{< relurl "..." >}}
+  # shortcodes. The page rendered by Hugo will have baseURL-aware links.
+  glossary_json = JSON.generate(current_glossary)
   "<script type=\"application/json\" id=\"glossary-data\">#{glossary_json}</script>\n" + marked_html
 end
 
@@ -300,6 +280,8 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
       if path == 'gitglossary'
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
+      else
+        html = embed_glossary_to_html(html, glossary_data_by_lang, lang)
       end
 
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
@@ -347,8 +329,6 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
 
         "#{before}{{< relurl \"#{after}\" >}}"
       end
-
-      html = embed_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
 
       # Write <docname>/<lang>.html
       front_matter = {
@@ -620,6 +600,8 @@ def index_doc(filter_tags, doc_list, get_content)
         if docname == 'gitglossary'
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
+        else
+          html = embed_glossary_to_html(html, glossary_data_by_lang, 'en')
         end
 
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
@@ -661,8 +643,6 @@ def index_doc(filter_tags, doc_list, get_content)
           check_paths.add(after.sub(/#.*/, ''))
           "#{before}{{< relurl \"#{after}\" >}}"
         end
-
-        html = embed_glossary_tooltips(html, glossary_data_by_lang, 'en', check_paths)
 
         doc_versions = version_map.keys.sort{|a, b| Version.version_to_num(a) <=> Version.version_to_num(b)}
         doc_version_index = doc_versions.index(version)
