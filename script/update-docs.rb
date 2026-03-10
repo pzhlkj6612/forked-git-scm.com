@@ -193,21 +193,21 @@ def mark_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
         cmd = cmd_raw.gsub(/&#x2d;/, '-')
         relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
         check_paths.add(relurl)
-        "<a href='{{< relurl '#{relurl}' >}}'>#{cmd_raw}[#{section}]</a>"
+        "<a href='{{< relurl \"#{relurl}\" >}}'>#{cmd_raw}[#{section}]</a>"
       end
     end
 
     # Convert absolute /... links (glossary self-links) to Hugo RelURL.
     # Switch to single-quoted href values so JSON serialisation is clean.
     resolved.gsub!(/href="(\/[^"]*)"/) do
-      "href='{{< relurl '#{$1[1..]}' >}}'"
+      "href='{{< relurl \"#{$1[1..]}\" >}}'"
     end
 
     resolved_glossary[term] = resolved
   end
 
   # Embed the entire glossary as a single inline JSON block.  Hugo will process
-  # all {{< relurl '...' >}} shortcodes in the content file, producing correct
+  # all {{< relurl "..." >}} shortcodes in the content file, producing correct
   # baseURL-aware links without duplicating definition HTML across span elements.
   glossary_json = JSON.generate(resolved_glossary)
   "<script type=\"application/json\" id=\"glossary-data\">#{glossary_json}</script>\n" + marked_html
