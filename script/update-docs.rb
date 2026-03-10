@@ -167,43 +167,50 @@ end
 def mark_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
   current_glossary = glossary_data_by_lang[lang] || {}
 
-  html.gsub(/&lt;([^&]+)&gt;/) do |match|
+  marked_html = html.gsub(/&lt;([^&]+)&gt;/) do |match|
     term = $1
     # Only mark terms that exist in the glossary
     if current_glossary.key?(term)
-      definition = current_glossary[term]
-
-      # Resolve linkgit references in the definition using Hugo RelURL so that
-      # Hugo generates correct links regardless of the site's baseURL setting.
-      resolved = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
-        if $1 == "curl"
-          "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
-        else
-          cmd_raw = $1
-          section = $2
-          cmd = cmd_raw.gsub(/&#x2d;/, '-')
-          relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
-          check_paths.add(relurl)
-          "<a href=\"{{< relurl \"#{relurl}\" >}}\">#{cmd_raw}[#{section}]</a>"
-        end
-      end
-
-      # Convert any remaining absolute /docs/... links (e.g. glossary self-links
-      # set by extract_glossary_from_html) to Hugo RelURL as well.
-      resolved.gsub!(/href="(\/[^"]*)"/) do
-        "href=\"{{< relurl \"#{$1[1..]}\" >}}\""
-      end
-
-      # Embed the resolved definition directly in the span's data attribute so
-      # that Hugo can generate proper links.  Use single quotes for the
-      # attribute wrapper to avoid conflicts with the double-quoted relurl
-      # shortcode arguments; encode any literal single quotes in the content.
-      escaped = resolved.gsub("'", "&#39;")
-      "<span class=\"hover-term\" data-term=\"#{term}\" data-definition='#{escaped}'>&lt;#{term}&gt;</span>"
+      "<span class=\"hover-term\" data-term=\"#{term}\">&lt;#{term}&gt;</span>"
     else
       match
     end
   end
+
+  return marked_html if current_glossary.empty?
+
+  # Build a resolved glossary hash with Hugo RelURL shortcodes for all links.
+  # Use single-quoted shortcode arguments so the JSON serialiser (which uses
+  # double quotes for string delimiters) never needs to escape them.
+  resolved_glossary = {}
+  current_glossary.each do |term, definition|
+    resolved = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
+      if $1 == "curl"
+        "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
+      else
+        cmd_raw = $1
+        section = $2
+        cmd = cmd_raw.gsub(/&#x2d;/, '-')
+        relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
+        check_paths.add(relurl)
+        "<a href='{{< relurl '#{relurl}' >}}'>#{cmd_raw}[#{section}]</a>"
+      end
+    end
+
+    # Convert absolute /... links (glossary self-links) to Hugo RelURL.
+    # Switch to single-quoted href values so JSON serialisation is clean.
+    resolved.gsub!(/href="(\/[^"]*)"/) do
+      "href='{{< relurl '#{$1[1..]}' >}}'"
+    end
+
+    resolved_glossary[term] = resolved
+  end
+
+  # Embed the entire glossary as a single inline JSON block.  Hugo will process
+  # all {{< relurl '...' >}} shortcodes in the content file, producing correct
+  # baseURL-aware links without duplicating definition HTML across span elements.
+  glossary_json = JSON.generate(resolved_glossary)
+  "<script type=\"application/json\" id=\"glossary-data\">#{glossary_json}</script>\n" + marked_html
 end
 
 def index_l10n_doc(filter_tags, doc_list, get_content)

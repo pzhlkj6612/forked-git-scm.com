@@ -1,10 +1,22 @@
 var GitGlossary = {
+  data: null,
   term: null,
   tooltip: null,
 
   init: function() {
     const content = document.querySelector('#content');
     if (!content) return;
+
+    // Glossary definitions are embedded as inline JSON by the build script so
+    // that Hugo can resolve RelURL shortcodes without needing a separate fetch.
+    const dataScript = document.getElementById('glossary-data');
+    if (!dataScript) return;
+
+    try {
+      this.data = JSON.parse(dataScript.textContent);
+    } catch (e) {
+      return;
+    }
 
     // Create the popover element
     document.body.insertAdjacentHTML('beforeend',
@@ -40,12 +52,9 @@ var GitGlossary = {
   attachHoverEvents: function(content) {
     content.addEventListener('mouseover', (e) => {
       if (e.target.classList.contains('hover-term')) {
-        console.log(this.term);
         this.term = e.target;
         const term = e.target.dataset.term;
-        // Definition HTML is embedded directly in the element by Hugo so that
-        // links use the correct baseURL-aware paths.
-        const definition = e.target.dataset.definition || '';
+        const definition = this.data[term] || '';
         const truncatedDefinition = this.truncateWords(definition, 60);
 
         const language = document.querySelector("html")?.getAttribute("lang") || 'en';
