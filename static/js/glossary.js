@@ -4,8 +4,6 @@ var GitGlossary = {
   tooltip: null,
 
   init: function() {
-    window.addEventListener('resize', () => this.reposition());
-
     // Glossary definitions are embedded as inline JSON by the
     // build script so that Hugo has resolved RelURL shortcodes directly.
     const el = document.getElementById('glossary-data');
@@ -21,6 +19,7 @@ var GitGlossary = {
     );
     this.tooltip = document.body.lastElementChild;
     this.attachHoverEvents(content);
+    window.addEventListener('resize', () => this.reposition());
   },
 
   show: function() {
