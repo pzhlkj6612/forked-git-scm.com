@@ -6,8 +6,8 @@ var GitGlossary = {
   init: function() {
     window.addEventListener('resize', () => this.reposition());
 
-    // Glossary definitions are embedded as inline JSON by the build script so
-    // that Hugo has resolved RelURL shortcodes directly.
+    // Glossary definitions are embedded as inline JSON by the
+    // build script so that Hugo has resolved RelURL shortcodes directly.
     this.data = JSON.parse(document.getElementById('glossary-data').textContent);
     const content = document.querySelector('#content');
 
