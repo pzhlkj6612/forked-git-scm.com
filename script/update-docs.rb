@@ -197,12 +197,6 @@ def embed_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
       end
     end
 
-    # Convert absolute /... links (glossary self-links) to Hugo RelURL.
-    # Switch to single-quoted href values so JSON serialisation is clean.
-    resolved.gsub!(/href="(\/[^"]*)"/) do
-      "href='{{< relurl \"#{$1[1..]}\" >}}'"
-    end
-
     resolved_glossary[term] = resolved
   end
 
@@ -627,6 +621,7 @@ def index_doc(filter_tags, doc_list, get_content)
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
         end
+
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
           x = /^linkgit:+(\S+?)\[(\d+)\]/.match(line)
           if x[1] == "curl"
