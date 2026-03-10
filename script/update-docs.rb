@@ -191,6 +191,29 @@ def mark_glossary_tooltips(html, glossary_data_by_lang, lang)
   end
 end
 
+def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
+  current_glossary = glossary_data_by_lang[lang] || {}
+
+  current_glossary.each do |term, definition|
+    current_glossary[term] = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
+      if $1 == "curl"
+        "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
+      else
+        cmd_raw = $1
+        section = $2
+        cmd = cmd_raw.gsub(/&#x2d;/, '-')
+        if lang == 'en'
+          relurl = "docs/#{cmd}"
+        else
+          relurl = "docs/#{cmd}/#{lang}"
+        end
+        check_paths.add(relurl)
+        "<a href=\"/#{relurl}\">#{cmd_raw}[#{section}]</a>"
+      end
+    end
+  end
+end
+
 def index_l10n_doc(filter_tags, doc_list, get_content)
   rebuild = ENV.fetch("REBUILD_DOC", nil)
   rerun = ENV["RERUN"] || rebuild || false
@@ -285,6 +308,8 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
       end
+
+      resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
 
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
         x = /^linkgit:(\S+?)\[(\d+)\]/.match(line)
@@ -607,6 +632,8 @@ def index_doc(filter_tags, doc_list, get_content)
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
         end
+
+        resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
 
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
           x = /^linkgit:+(\S+?)\[(\d+)\]/.match(line)
