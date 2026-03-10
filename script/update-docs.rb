@@ -164,23 +164,10 @@ def extract_glossary_from_html(content, lang = 'en')
   glossary
 end
 
-def save_glossary_files(glossary_data_by_lang)
-  return if glossary_data_by_lang.empty?
-
-  glossary_dir = "#{SITE_ROOT}static/js/glossary"
-  FileUtils.mkdir_p(glossary_dir)
-
-  glossary_data_by_lang.each do |lang, glossary_data|
-    output_file = "#{glossary_dir}/#{lang}.json"
-    puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
-    File.write(output_file, JSON.pretty_generate(glossary_data))
-  end
-end
-
-def mark_glossary_tooltips(html, glossary_data_by_lang, lang)
+def mark_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
   current_glossary = glossary_data_by_lang[lang] || {}
 
-  html.gsub(/&lt;([^&]+)&gt;/) do |match|
+  marked_html = html.gsub(/&lt;([^&]+)&gt;/) do |match|
     term = $1
     # Only mark terms that exist in the glossary
     if current_glossary.key?(term)
@@ -189,29 +176,41 @@ def mark_glossary_tooltips(html, glossary_data_by_lang, lang)
       match
     end
   end
-end
 
-def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
-  current_glossary = glossary_data_by_lang[lang] || {}
+  return marked_html if current_glossary.empty?
 
+  # Build a resolved glossary hash with Hugo RelURL shortcodes for all links.
+  # Use single-quoted shortcode arguments so the JSON serialiser (which uses
+  # double quotes for string delimiters) never needs to escape them.
+  resolved_glossary = {}
   current_glossary.each do |term, definition|
-    current_glossary[term] = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
+    resolved = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
       if $1 == "curl"
         "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
       else
         cmd_raw = $1
         section = $2
         cmd = cmd_raw.gsub(/&#x2d;/, '-')
-        if lang == 'en'
-          relurl = "docs/#{cmd}"
-        else
-          relurl = "docs/#{cmd}/#{lang}"
-        end
+        relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
         check_paths.add(relurl)
-        "<a href=\"/#{relurl}\">#{cmd_raw}[#{section}]</a>"
+        "<a href='{{< relurl \"#{relurl}\" >}}'>#{cmd_raw}[#{section}]</a>"
       end
     end
+
+    # Convert absolute /... links (glossary self-links) to Hugo RelURL.
+    # Switch to single-quoted href values so JSON serialisation is clean.
+    resolved.gsub!(/href="(\/[^"]*)"/) do
+      "href='{{< relurl \"#{$1[1..]}\" >}}'"
+    end
+
+    resolved_glossary[term] = resolved
   end
+
+  # Embed the entire glossary as a single inline JSON block.  Hugo will process
+  # all {{< relurl "..." >}} shortcodes in the content file, producing correct
+  # baseURL-aware links without duplicating definition HTML across span elements.
+  glossary_json = JSON.generate(resolved_glossary)
+  "<script type=\"application/json\" id=\"glossary-data\">#{glossary_json}</script>\n" + marked_html
 end
 
 def index_l10n_doc(filter_tags, doc_list, get_content)
@@ -307,7 +306,6 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
       if path == 'gitglossary'
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
-        resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
       end
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
         x = /^linkgit:(\S+?)\[(\d+)\]/.match(line)
@@ -355,7 +353,7 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
         "#{before}{{< relurl \"#{after}\" >}}"
       end
 
-      html = mark_glossary_tooltips(html, glossary_data_by_lang, lang)
+      html = mark_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
 
       # Write <docname>/<lang>.html
       front_matter = {
@@ -381,8 +379,6 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
 
       lang_data[lang] = asciidoc_sha
     end
-
-    save_glossary_files(glossary_data_by_lang)
 
     # In some cases, translations are not complete. As a consequence, some
     # translated manual pages may point to other translated manual pages that do
@@ -629,7 +625,6 @@ def index_doc(filter_tags, doc_list, get_content)
         if docname == 'gitglossary'
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
-          resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
         end
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
           x = /^linkgit:+(\S+?)\[(\d+)\]/.match(line)
@@ -671,7 +666,7 @@ def index_doc(filter_tags, doc_list, get_content)
           "#{before}{{< relurl \"#{after}\" >}}"
         end
 
-        html = mark_glossary_tooltips(html, glossary_data_by_lang, 'en')
+        html = mark_glossary_tooltips(html, glossary_data_by_lang, 'en', check_paths)
 
         doc_versions = version_map.keys.sort{|a, b| Version.version_to_num(a) <=> Version.version_to_num(b)}
         doc_version_index = doc_versions.index(version)
@@ -791,8 +786,6 @@ def index_doc(filter_tags, doc_list, get_content)
         end
       end
     end
-
-    save_glossary_files(glossary_data_by_lang)
 
     data["latest-version"] = version if !data["latest-version"] || Version.version_to_num(data["latest-version"]) < Version.version_to_num(version)
   end
