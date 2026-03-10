@@ -185,11 +185,11 @@ def mark_glossary_tooltips(html, glossary_data_by_lang, lang, check_paths)
   resolved_glossary = {}
   current_glossary.each do |term, definition|
     resolved = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
-      if $1 == "curl"
+      cmd_raw = $1
+      section = $2
+      if cmd_raw == "curl"
         "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
       else
-        cmd_raw = $1
-        section = $2
         cmd = cmd_raw.gsub(/&#x2d;/, '-')
         relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
         check_paths.add(relurl)
