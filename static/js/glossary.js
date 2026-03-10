@@ -8,7 +8,11 @@ var GitGlossary = {
 
     // Glossary definitions are embedded as inline JSON by the
     // build script so that Hugo has resolved RelURL shortcodes directly.
-    this.data = JSON.parse(document.getElementById('glossary-data').textContent);
+    const el = document.getElementById('glossary-data')
+    if (!el) {
+      return;
+    }
+    this.data = JSON.parse(el.textContent);
     const content = document.querySelector('#content');
 
     // Create the popover element
