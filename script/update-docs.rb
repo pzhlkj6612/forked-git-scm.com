@@ -179,7 +179,7 @@ def save_glossary_content_page(lang)
   File.write("#{glossary_content_dir}/#{lang}.html", wrap_front_matter(front_matter))
 end
 
-def mark_glossary_tooltips(html, glossary_data_by_lang, lang = 'en')
+def mark_glossary_tooltips(html, glossary_data_by_lang, lang)
   current_glossary = glossary_data_by_lang[lang] || {}
 
   return html if current_glossary.empty?
