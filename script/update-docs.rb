@@ -164,12 +164,16 @@ def extract_glossary_from_html(content, lang = 'en')
   glossary
 end
 
-def save_glossary_data(lang, glossary_data)
+def save_glossary_data(glossary_data_by_lang, lang)
+  current_glossary = glossary_data_by_lang[lang] || {}
+
+  return if current_glossary.empty?
+
   glossary_data_dir = "#{SITE_ROOT}external/docs/data/glossary"
   FileUtils.mkdir_p(glossary_data_dir)
   output_file = "#{glossary_data_dir}/#{lang}.json"
-  puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
-  File.write(output_file, JSON.generate(glossary_data))
+  puts "   saving glossary data to #{output_file} (#{current_glossary.size} terms)"
+  File.write(output_file, JSON.generate(current_glossary))
 end
 
 def save_glossary_content_page(lang)
@@ -308,7 +312,7 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
         resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
-        save_glossary_data(lang, glossary_data_by_lang[lang])
+        save_glossary_data(glossary_data_by_lang, lang)
         save_glossary_content_page(lang)
       else
         html = mark_glossary_tooltips(html, glossary_data_by_lang, lang)
@@ -631,7 +635,7 @@ def index_doc(filter_tags, doc_list, get_content)
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
           resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
-          save_glossary_data('en', glossary_data_by_lang['en'])
+          save_glossary_data(glossary_data_by_lang, 'en')
           save_glossary_content_page('en')
         else
           html = mark_glossary_tooltips(html, glossary_data_by_lang, 'en')
