@@ -7,7 +7,7 @@ var GitGlossary = {
     const language = document.querySelector("html")?.getAttribute("lang") || 'en';
     $.getJSON(baseURLPrefix + 'js/glossary/' + language + '.json')
       .done((data) => this.onDataLoaded(data));
-    window.addEventListener('resize', () => this.reposition());
+    window.addEventListener('resize', () => this.reposition())
   },
 
   onDataLoaded: function(data) {
