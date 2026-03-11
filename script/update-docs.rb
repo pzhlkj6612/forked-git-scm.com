@@ -164,6 +164,21 @@ def extract_glossary_from_html(content, lang = 'en')
   glossary
 end
 
+def save_glossary_data(lang, glossary_data)
+  glossary_data_dir = "#{SITE_ROOT}external/docs/data/glossary"
+  FileUtils.mkdir_p(glossary_data_dir)
+  output_file = "#{glossary_data_dir}/#{lang}.json"
+  puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
+  File.write(output_file, JSON.generate(glossary_data))
+end
+
+def save_glossary_content_page(lang)
+  glossary_content_dir = "#{SITE_ROOT}external/docs/content/js/glossary"
+  FileUtils.mkdir_p(glossary_content_dir)
+  front_matter = { "outputs" => ["json"], "lang" => lang }
+  File.write("#{glossary_content_dir}/#{lang}.html", wrap_front_matter(front_matter))
+end
+
 def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
   current_glossary = glossary_data_by_lang[lang] || {}
 
@@ -181,21 +196,6 @@ def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
       end
     end
   end
-end
-
-def save_glossary_data(lang, glossary_data)
-  glossary_data_dir = "#{SITE_ROOT}external/docs/data/glossary"
-  FileUtils.mkdir_p(glossary_data_dir)
-  output_file = "#{glossary_data_dir}/#{lang}.json"
-  puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
-  File.write(output_file, JSON.generate(glossary_data))
-end
-
-def save_glossary_content_page(lang)
-  glossary_content_dir = "#{SITE_ROOT}external/docs/content/js/glossary"
-  FileUtils.mkdir_p(glossary_content_dir)
-  front_matter = { "outputs" => ["json"], "lang" => lang }
-  File.write("#{glossary_content_dir}/#{lang}.html", wrap_front_matter(front_matter))
 end
 
 def mark_glossary_tooltips(html, glossary_data_by_lang, lang = 'en')
