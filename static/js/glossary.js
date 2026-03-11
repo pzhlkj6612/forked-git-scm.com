@@ -49,7 +49,6 @@ var GitGlossary = {
 
     content.addEventListener('mouseover', (e) => {
       if (e.target.classList.contains('hover-term')) {
-        console.log(this.term);
         this.term = e.target;
         const term = e.target.dataset.term;
         const definition = this.data[term] || '';

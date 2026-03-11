@@ -1,8 +1,24 @@
-{{- $glossary := index .Site.Data.glossary .Params.lang | default dict -}}
-{{- $base := strings.TrimSuffix "/" .Site.BaseURL -}}
+{{- $lang := .Params.lang | default "en" -}}
+{{- $glossary := index .Site.Data.glossary $lang | default dict -}}
+{{- $base := strings.TrimSuffix "/" (relURL "/") -}}
 {{- $resolved := dict -}}
 {{- range $term, $def := $glossary -}}
   {{- $resolvedDef := replace $def `href="/` (printf `href="%s/` $base) -}}
+  {{- range $match := findRESubmatch `linkgit:+([^\\[]+)\\[(\\d+)\\]` $resolvedDef -}}
+    {{- $full := index $match 0 -}}
+    {{- $cmdRaw := index $match 1 -}}
+    {{- $section := index $match 2 -}}
+    {{- $href := "" -}}
+    {{- if eq $cmdRaw "curl" -}}
+      {{- $href = "https://curl.se/docs/manpage.html" -}}
+    {{- else -}}
+      {{- $cmd := replace $cmdRaw "&#x2d;" "-" -}}
+      {{- $relurl := cond (eq $lang "en") (printf "docs/%s" $cmd) (printf "docs/%s/%s" $cmd $lang) -}}
+      {{- $href = relURL $relurl -}}
+    {{- end -}}
+    {{- $replacement := printf `<a href="%s">%s[%s]</a>` $href $cmdRaw $section -}}
+    {{- $resolvedDef = replace $resolvedDef $full $replacement -}}
+  {{- end -}}
   {{- $resolved = merge $resolved (dict $term $resolvedDef) -}}
 {{- end -}}
 {{- $resolved | jsonify -}}
