@@ -7,12 +7,12 @@ var GitGlossary = {
     const language = document.querySelector("html")?.getAttribute("lang") || 'en';
     $.getJSON(baseURLPrefix + 'js/glossary/' + language + '.json')
       .done((data) => this.onDataLoaded(data));
+    window.addEventListener('resize', () => this.reposition());
   },
 
   onDataLoaded: function(data) {
     this.data = data;
     const content = document.querySelector('#content');
-    if (!content) return;
 
     // Create the popover element
     document.body.insertAdjacentHTML('beforeend',
@@ -20,7 +20,6 @@ var GitGlossary = {
     );
     this.tooltip = document.body.lastElementChild;
     this.attachHoverEvents(content);
-    window.addEventListener('resize', () => this.reposition());
   },
 
   show: function() {
