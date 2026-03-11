@@ -304,8 +304,6 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
         resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
-      else
-        html = mark_glossary_tooltips(html, glossary_data_by_lang, lang)
       end
 
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
@@ -353,6 +351,8 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
 
         "#{before}{{< relurl \"#{after}\" >}}"
       end
+
+      html = mark_glossary_tooltips(html, glossary_data_by_lang, lang)
 
       # Write <docname>/<lang>.html
       front_matter = {
@@ -627,8 +627,6 @@ def index_doc(filter_tags, doc_list, get_content)
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
           resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
-        else
-          html = mark_glossary_tooltips(html, glossary_data_by_lang, 'en')
         end
 
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
@@ -670,6 +668,8 @@ def index_doc(filter_tags, doc_list, get_content)
           check_paths.add(after.sub(/#.*/, ''))
           "#{before}{{< relurl \"#{after}\" >}}"
         end
+
+        html = mark_glossary_tooltips(html, glossary_data_by_lang, 'en')
 
         doc_versions = version_map.keys.sort{|a, b| Version.version_to_num(a) <=> Version.version_to_num(b)}
         doc_version_index = doc_versions.index(version)
