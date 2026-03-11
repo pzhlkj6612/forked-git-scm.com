@@ -197,14 +197,14 @@ def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
   current_glossary.each do |term, definition|
     current_glossary[term] = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
       if $1 == "curl"
-        "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
+        "<a href='https://curl.se/docs/manpage.html'>curl</a>"
       else
         cmd_raw = $1
         section = $2
         cmd = cmd_raw.gsub(/&#x2d;/, '-')
         relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
         check_paths.add(relurl)
-        "<a href=\"/#{relurl}\">#{cmd_raw}[#{section}]</a>"
+        "<a href='/#{relurl}'>#{cmd_raw}[#{section}]</a>"
       end
     end
   end
