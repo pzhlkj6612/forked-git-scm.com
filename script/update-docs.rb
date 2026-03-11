@@ -167,7 +167,7 @@ end
 def save_glossary_data(glossary_data_by_lang, lang)
   glossary_data = glossary_data_by_lang[lang] || {}
 
-  glossary_data_dir = "#{SITE_ROOT}external/docs/data/glossary"
+  glossary_data_dir = "#{SITE_ROOT}data/glossary"
   FileUtils.mkdir_p(glossary_data_dir)
   output_file = "#{glossary_data_dir}/#{lang}.json"
   puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
@@ -175,7 +175,7 @@ def save_glossary_data(glossary_data_by_lang, lang)
 end
 
 def save_glossary_content_page(lang)
-  glossary_content_dir = "#{SITE_ROOT}external/docs/content/js/glossary"
+  glossary_content_dir = "#{SITE_ROOT}content/js/glossary"
   FileUtils.mkdir_p(glossary_content_dir)
   front_matter = { "outputs" => ["json"], "lang" => lang }
   File.write("#{glossary_content_dir}/#{lang}.html", wrap_front_matter(front_matter))
