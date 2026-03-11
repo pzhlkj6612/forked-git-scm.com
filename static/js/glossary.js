@@ -4,14 +4,15 @@ var GitGlossary = {
   tooltip: null,
 
   init: function() {
-    // Glossary definitions are embedded as inline JSON by the
-    // build script so that Hugo has resolved RelURL shortcodes directly.
-    const el = document.getElementById('glossary-data');
-    if (!el) {
-      return;
-    }
-    this.data = JSON.parse(el.textContent);
+    const language = document.querySelector("html")?.getAttribute("lang") || 'en';
+    $.getJSON(baseURLPrefix + 'js/glossary/' + language + '.json')
+      .done((data) => this.onDataLoaded(data));
+  },
+
+  onDataLoaded: function(data) {
+    this.data = data;
     const content = document.querySelector('#content');
+    if (!content) return;
 
     // Create the popover element
     document.body.insertAdjacentHTML('beforeend',
