@@ -294,7 +294,7 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
       html = asciidoc.render
 
       if path == 'gitglossary'
-        glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang, check_paths)
+        glossary_data_by_lang[lang] = extract_glossary_from_html(html, check_paths, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
       end
 
@@ -616,7 +616,7 @@ def index_doc(filter_tags, doc_list, get_content)
         html = asciidoc.render
 
         if docname == 'gitglossary'
-          glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en', check_paths)
+          glossary_data_by_lang['en'] = extract_glossary_from_html(html, check_paths, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
         end
 
