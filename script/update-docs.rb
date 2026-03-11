@@ -165,15 +165,15 @@ def extract_glossary_from_html(content, lang = 'en')
 end
 
 def save_glossary_data(glossary_data_by_lang, lang)
-  current_glossary = glossary_data_by_lang[lang] || {}
+  glossary_data = glossary_data_by_lang[lang] || {}
 
-  return if current_glossary.empty?
+  return if glossary_data.empty?
 
   glossary_data_dir = "#{SITE_ROOT}external/docs/data/glossary"
   FileUtils.mkdir_p(glossary_data_dir)
   output_file = "#{glossary_data_dir}/#{lang}.json"
-  puts "   saving glossary data to #{output_file} (#{current_glossary.size} terms)"
-  File.write(output_file, JSON.generate(current_glossary))
+  puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
+  File.write(output_file, JSON.pretty_generate(glossary_data))
 end
 
 def save_glossary_content_page(lang)
