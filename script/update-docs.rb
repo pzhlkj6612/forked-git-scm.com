@@ -111,7 +111,7 @@ def extract_headings(html)
   headings
 end
 
-def extract_glossary_from_html(content, lang = 'en', check_paths)
+def extract_glossary_from_html(content, check_paths, lang = 'en')
   # skip front matter
   content = content.split(/^---$/)[2] || content
 
