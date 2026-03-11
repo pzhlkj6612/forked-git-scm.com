@@ -167,8 +167,6 @@ end
 def save_glossary_data(glossary_data_by_lang, lang)
   glossary_data = glossary_data_by_lang[lang] || {}
 
-  return if glossary_data.empty?
-
   glossary_data_dir = "#{SITE_ROOT}external/docs/data/glossary"
   FileUtils.mkdir_p(glossary_data_dir)
   output_file = "#{glossary_data_dir}/#{lang}.json"
@@ -185,8 +183,6 @@ end
 
 def mark_glossary_tooltips(html, glossary_data_by_lang, lang)
   current_glossary = glossary_data_by_lang[lang] || {}
-
-  return html if current_glossary.empty?
 
   html.gsub(/&lt;([^&]+)&gt;/) do |match|
     term = $1
