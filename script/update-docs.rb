@@ -111,7 +111,7 @@ def extract_headings(html)
   headings
 end
 
-def extract_glossary_from_html(content, lang = 'en')
+def extract_glossary_from_html(content, lang = 'en', check_paths = nil)
   # skip front matter
   content = content.split(/^---$/)[2] || content
 
@@ -155,6 +155,18 @@ def extract_glossary_from_html(content, lang = 'en')
       end
     end
     definition = definition_fragment.to_html
+    definition.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do
+      if $1 == "curl"
+        "<a href='https://curl.se/docs/manpage.html'>curl</a>"
+      else
+        cmd_raw = $1
+        section = $2
+        cmd = cmd_raw.gsub(/&#x2d;/, '-')
+        relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
+        check_paths&.add(relurl)
+        "<a href='/#{relurl}'>#{cmd_raw}[#{section}]</a>"
+      end
+    end
 
     term_names.each do |term|
       glossary[term] = definition
@@ -187,25 +199,6 @@ def mark_glossary_tooltips(html, glossary_data_by_lang, lang)
       "<span class=\"hover-term\" data-term=\"#{term}\">&lt;#{term}&gt;</span>"
     else
       match
-    end
-  end
-end
-
-def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
-  current_glossary = glossary_data_by_lang[lang] || {}
-
-  current_glossary.each do |term, definition|
-    current_glossary[term] = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
-      if $1 == "curl"
-        "<a href='https://curl.se/docs/manpage.html'>curl</a>"
-      else
-        cmd_raw = $1
-        section = $2
-        cmd = cmd_raw.gsub(/&#x2d;/, '-')
-        relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
-        check_paths.add(relurl)
-        "<a href='/#{relurl}'>#{cmd_raw}[#{section}]</a>"
-      end
     end
   end
 end
@@ -301,9 +294,8 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
       html = asciidoc.render
 
       if path == 'gitglossary'
-        glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
+        glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang, check_paths)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
-        resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
       end
 
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
@@ -624,9 +616,8 @@ def index_doc(filter_tags, doc_list, get_content)
         html = asciidoc.render
 
         if docname == 'gitglossary'
-          glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
+          glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en', check_paths)
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
-          resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
         end
 
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|
