@@ -164,31 +164,54 @@ def extract_glossary_from_html(content, lang = 'en')
   glossary
 end
 
-# Embed the entire glossary as a single inline JSON block.
-# The embedded JSON should be processed alone with the webpage
-# and "linkgit" should be converted to Hugo's {{< relurl "..." >}}
-# shortcodes. The page rendered by Hugo will have baseURL-aware links.
-def embed_glossary_in_html(html, glossary_data_by_lang, lang = 'en')
+def mark_glossary_tooltips(html, glossary_data_by_lang, lang = 'en')
   current_glossary = glossary_data_by_lang[lang] || {}
 
   return html if current_glossary.empty?
 
-  used_glossary = {}
-
-  html = html.gsub(/&lt;([^&]+)&gt;/) do |match|
+  html.gsub(/&lt;([^&]+)&gt;/) do |match|
     term = $1
     # Only mark terms that exist in the glossary
     if current_glossary.key?(term)
-      used_glossary[term] = current_glossary[term]
       "<span class=\"hover-term\" data-term=\"#{term}\">&lt;#{term}&gt;</span>"
     else
       match
     end
   end
+end
 
-  glossary_json = JSON.generate(used_glossary).gsub('</', '<\/')
-  glossary_html = "<script type=\"application/json\" id=\"glossary-data\">#{glossary_json}</script>\n"
-  glossary_html + html
+def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
+  current_glossary = glossary_data_by_lang[lang] || {}
+
+  current_glossary.each do |term, definition|
+    current_glossary[term] = definition.gsub(/linkgit:+(\S+?)\[(\d+)\]/) do
+      if $1 == "curl"
+        "<a href=\"https://curl.se/docs/manpage.html\">curl</a>"
+      else
+        cmd_raw = $1
+        section = $2
+        cmd = cmd_raw.gsub(/&#x2d;/, '-')
+        relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
+        check_paths.add(relurl)
+        "<a href=\"/#{relurl}\">#{cmd_raw}[#{section}]</a>"
+      end
+    end
+  end
+end
+
+def save_glossary_data(lang, glossary_data)
+  glossary_data_dir = "#{SITE_ROOT}external/docs/data/glossary"
+  FileUtils.mkdir_p(glossary_data_dir)
+  output_file = "#{glossary_data_dir}/#{lang}.json"
+  puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
+  File.write(output_file, JSON.generate(glossary_data))
+end
+
+def save_glossary_content_page(lang)
+  glossary_content_dir = "#{SITE_ROOT}external/docs/content/js/glossary"
+  FileUtils.mkdir_p(glossary_content_dir)
+  front_matter = { "outputs" => ["json"], "lang" => lang }
+  File.write("#{glossary_content_dir}/#{lang}.html", wrap_front_matter(front_matter))
 end
 
 def index_l10n_doc(filter_tags, doc_list, get_content)
@@ -284,8 +307,11 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
       if path == 'gitglossary'
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
+        resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
+        save_glossary_data(lang, glossary_data_by_lang[lang])
+        save_glossary_content_page(lang)
       else
-        html = embed_glossary_in_html(html, glossary_data_by_lang, lang)
+        html = mark_glossary_tooltips(html, glossary_data_by_lang, lang)
       end
 
       html.gsub!(/linkgit:(\S+?)\[(\d+)\]/) do |line|
@@ -604,8 +630,11 @@ def index_doc(filter_tags, doc_list, get_content)
         if docname == 'gitglossary'
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
+          resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
+          save_glossary_data('en', glossary_data_by_lang['en'])
+          save_glossary_content_page('en')
         else
-          html = embed_glossary_in_html(html, glossary_data_by_lang, 'en')
+          html = mark_glossary_tooltips(html, glossary_data_by_lang, 'en')
         end
 
         html.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do |line|

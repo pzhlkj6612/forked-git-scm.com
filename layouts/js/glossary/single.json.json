@@ -1,0 +1,9 @@
+{{- $lang := .Params.lang -}}
+{{- $glossary := index .Site.Data.glossary $lang | default dict -}}
+{{- $base := strings.TrimSuffix "/" (absURL "") -}}
+{{- $resolved := dict -}}
+{{- range $term, $def := $glossary -}}
+  {{- $resolvedDef := replace $def `href="/` (printf `href="%s/` $base) -}}
+  {{- $resolved = merge $resolved (dict $term $resolvedDef) -}}
+{{- end -}}
+{{- $resolved | jsonify -}}
