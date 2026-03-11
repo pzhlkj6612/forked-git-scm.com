@@ -111,7 +111,7 @@ def extract_headings(html)
   headings
 end
 
-def extract_glossary_from_html(content, lang = 'en', check_paths = nil)
+def extract_glossary_from_html(content, lang = 'en', check_paths)
   # skip front matter
   content = content.split(/^---$/)[2] || content
 
@@ -163,7 +163,7 @@ def extract_glossary_from_html(content, lang = 'en', check_paths = nil)
         section = $2
         cmd = cmd_raw.gsub(/&#x2d;/, '-')
         relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
-        check_paths&.add(relurl)
+        check_paths.add(relurl)
         "<a href='/#{relurl}'>#{cmd_raw}[#{section}]</a>"
       end
     end
