@@ -164,21 +164,17 @@ def extract_glossary_from_html(content, lang = 'en')
   glossary
 end
 
-def save_glossary_data(glossary_data_by_lang, lang)
-  glossary_data = glossary_data_by_lang[lang] || {}
+def save_glossary_files(glossary_data_by_lang)
+  return if glossary_data_by_lang.empty?
 
-  glossary_data_dir = "#{SITE_ROOT}data/glossary"
-  FileUtils.mkdir_p(glossary_data_dir)
-  output_file = "#{glossary_data_dir}/#{lang}.json"
-  puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
-  File.write(output_file, JSON.pretty_generate(glossary_data))
-end
+  glossary_dir = "#{SITE_ROOT}external/docs/data/glossary"
+  FileUtils.mkdir_p(glossary_dir)
 
-def save_glossary_content_page(lang)
-  glossary_content_dir = "#{SITE_ROOT}content/js/glossary"
-  FileUtils.mkdir_p(glossary_content_dir)
-  front_matter = { "outputs" => ["json"], "lang" => lang }
-  File.write("#{glossary_content_dir}/#{lang}.html", wrap_front_matter(front_matter))
+  glossary_data_by_lang.each do |lang, glossary_data|
+    output_file = "#{glossary_dir}/#{lang}.json"
+    puts "   saving glossary data to #{output_file} (#{glossary_data.size} terms)"
+    File.write(output_file, JSON.pretty_generate(glossary_data))
+  end
 end
 
 def mark_glossary_tooltips(html, glossary_data_by_lang, lang)
@@ -383,8 +379,7 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
       lang_data[lang] = asciidoc_sha
     end
 
-    save_glossary_data(glossary_data_by_lang, lang)
-    save_glossary_content_page(lang)
+    save_glossary_files(glossary_data_by_lang)
 
     # In some cases, translations are not complete. As a consequence, some
     # translated manual pages may point to other translated manual pages that do
@@ -795,8 +790,7 @@ def index_doc(filter_tags, doc_list, get_content)
       end
     end
 
-    save_glossary_data(glossary_data_by_lang, 'en')
-    save_glossary_content_page('en')
+    save_glossary_files(glossary_data_by_lang)
 
     data["latest-version"] = version if !data["latest-version"] || Version.version_to_num(data["latest-version"]) < Version.version_to_num(version)
   end
