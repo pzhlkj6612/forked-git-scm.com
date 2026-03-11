@@ -308,8 +308,6 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
         glossary_data_by_lang[lang] = extract_glossary_from_html(html, lang)
         puts "   extracted #{glossary_data_by_lang[lang].size} glossary terms for #{lang}"
         resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
-        save_glossary_data(glossary_data_by_lang, lang)
-        save_glossary_content_page(lang)
       else
         html = mark_glossary_tooltips(html, glossary_data_by_lang, lang)
       end
@@ -384,6 +382,9 @@ def index_l10n_doc(filter_tags, doc_list, get_content)
 
       lang_data[lang] = asciidoc_sha
     end
+
+    save_glossary_data(glossary_data_by_lang, lang)
+    save_glossary_content_page(lang)
 
     # In some cases, translations are not complete. As a consequence, some
     # translated manual pages may point to other translated manual pages that do
@@ -631,8 +632,6 @@ def index_doc(filter_tags, doc_list, get_content)
           glossary_data_by_lang['en'] = extract_glossary_from_html(html, 'en')
           puts "   extracted #{glossary_data_by_lang['en'].size} glossary terms for 'en'"
           resolve_glossary_linkgits(glossary_data_by_lang, 'en', check_paths)
-          save_glossary_data(glossary_data_by_lang, 'en')
-          save_glossary_content_page('en')
         else
           html = mark_glossary_tooltips(html, glossary_data_by_lang, 'en')
         end
@@ -795,6 +794,9 @@ def index_doc(filter_tags, doc_list, get_content)
         end
       end
     end
+
+    save_glossary_data(glossary_data_by_lang, 'en')
+    save_glossary_content_page('en')
 
     data["latest-version"] = version if !data["latest-version"] || Version.version_to_num(data["latest-version"]) < Version.version_to_num(version)
   end
