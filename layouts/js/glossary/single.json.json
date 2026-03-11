@@ -1,6 +1,5 @@
-{{- $lang := .Params.lang -}}
-{{- $glossary := index .Site.Data.glossary $lang | default dict -}}
-{{- $base := strings.TrimSuffix "/" (absURL "") -}}
+{{- $glossary := index .Site.Data.glossary .Params.lang | default dict -}}
+{{- $base := strings.TrimSuffix "/" .Site.BaseURL -}}
 {{- $resolved := dict -}}
 {{- range $term, $def := $glossary -}}
   {{- $resolvedDef := replace $def `href="/` (printf `href="%s/` $base) -}}
