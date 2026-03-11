@@ -2,7 +2,7 @@
 {{- $base := strings.TrimSuffix "/" .Site.BaseURL -}}
 {{- $resolved := dict -}}
 {{- range $term, $def := $glossary -}}
-  {{- $resolvedDef := replace $def `href="/` (printf `href="%s/` $base) -}}
+  {{- $resolvedDef := replace $def `href='/` (printf `href='%s/` $base) -}}
   {{- $resolved = merge $resolved (dict $term $resolvedDef) -}}
 {{- end -}}
 {{- $resolved | jsonify -}}
