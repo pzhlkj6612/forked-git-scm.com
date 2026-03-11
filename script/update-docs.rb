@@ -179,6 +179,22 @@ def save_glossary_content_page(lang)
   File.write("#{glossary_content_dir}/#{lang}.html", wrap_front_matter(front_matter))
 end
 
+def mark_glossary_tooltips(html, glossary_data_by_lang, lang = 'en')
+  current_glossary = glossary_data_by_lang[lang] || {}
+
+  return html if current_glossary.empty?
+
+  html.gsub(/&lt;([^&]+)&gt;/) do |match|
+    term = $1
+    # Only mark terms that exist in the glossary
+    if current_glossary.key?(term)
+      "<span class=\"hover-term\" data-term=\"#{term}\">&lt;#{term}&gt;</span>"
+    else
+      match
+    end
+  end
+end
+
 def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
   current_glossary = glossary_data_by_lang[lang] || {}
 
@@ -194,22 +210,6 @@ def resolve_glossary_linkgits(glossary_data_by_lang, lang, check_paths)
         check_paths.add(relurl)
         "<a href=\"/#{relurl}\">#{cmd_raw}[#{section}]</a>"
       end
-    end
-  end
-end
-
-def mark_glossary_tooltips(html, glossary_data_by_lang, lang = 'en')
-  current_glossary = glossary_data_by_lang[lang] || {}
-
-  return html if current_glossary.empty?
-
-  html.gsub(/&lt;([^&]+)&gt;/) do |match|
-    term = $1
-    # Only mark terms that exist in the glossary
-    if current_glossary.key?(term)
-      "<span class=\"hover-term\" data-term=\"#{term}\">&lt;#{term}&gt;</span>"
-    else
-      match
     end
   end
 end
