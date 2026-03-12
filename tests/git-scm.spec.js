@@ -191,7 +191,8 @@ test('anchor links in manual pages', async ({ page }) => {
 test('tooltips in manual pages contain absolute links', async ({ page }) => {
   const cases = [
     {
-      // Test that the "#def_foo" links have been resolved
+      // Test that the "#def_foo" links ("<<def_foo,bar>>" from
+      // glossary-content.adoc) have been resolved
       pageUrl: `${url}docs/git-push/fr`,
       triggerText: '<dépôt>',  // repository
       tooltipElementText: 'refs',
