@@ -139,7 +139,7 @@ def extract_glossary_from_html(content, check_paths, lang = 'en')
     current_element = dt.next_element
     raise 'Expected dd' unless current_element&.name == 'dd'
 
-    # Fix up the links because they'regoing to be on a different page
+    # Fix up the links because they're going to be on a different page
     if lang == 'en'
       glossary_url = '/docs/gitglossary'
     else
@@ -155,6 +155,11 @@ def extract_glossary_from_html(content, check_paths, lang = 'en')
       end
     end
     definition = definition_fragment.to_html
+
+    # Hugo constructs "public/js/glossary/#{lang}.json" by those files:
+    # - external/docs/content/js/glossary/#{lang}.html
+    # - external/docs/data/glossary/#{lang}.json
+    # - layouts/js/glossary/single.json.json
     definition.gsub!(/linkgit:+(\S+?)\[(\d+)\]/) do
       if $1 == "curl"
         "<a href='https://curl.se/docs/manpage.html'>curl</a>"
@@ -162,6 +167,7 @@ def extract_glossary_from_html(content, check_paths, lang = 'en')
         cmd_raw = $1
         section = $2
         cmd = cmd_raw.gsub(/&#x2d;/, '-')
+        # Fix up the links because they're going to be on a different page
         relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
         check_paths.add(relurl)
         "<a href='/#{relurl}'>#{cmd_raw}[#{section}]</a>"
