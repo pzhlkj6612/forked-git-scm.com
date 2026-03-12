@@ -167,9 +167,9 @@ def extract_glossary_from_html(content, check_paths, lang = 'en')
         cmd_raw = $1
         section = $2
         cmd = cmd_raw.gsub(/&#x2d;/, '-')
-        # Fix up the links because they're going to be on a different page
         relurl = lang == 'en' ? "docs/#{cmd}" : "docs/#{cmd}/#{lang}"
         check_paths.add(relurl)
+        # Fix up the links because they're going to be on a different page
         "<a href='/#{relurl}'>#{cmd_raw}[#{section}]</a>"
       end
     end
