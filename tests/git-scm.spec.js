@@ -201,7 +201,7 @@ test('tooltips in manual pages contain absolute links', async ({ page }) => {
       // Test that the "git-foo[1]" links have been resolved
       pageUrl: `${url}docs/git-push`,
       triggerText: '<refspec>',
-      tooltipElementText: 'git-fetch',
+      tooltipElementText: 'git-fetch[1]',
       tooltipElementHref: `/docs/git-fetch`,
     },
   ]
@@ -214,7 +214,7 @@ test('tooltips in manual pages contain absolute links', async ({ page }) => {
   } of cases) {
     await page.goto(pageUrl)
 
-    const trigger = page.getByText(triggerText)
+    const trigger = page.getByText(triggerText, { exact: true }).first()
     await expect(trigger).toBeVisible()
 
     await trigger.hover()
@@ -222,7 +222,7 @@ test('tooltips in manual pages contain absolute links', async ({ page }) => {
     const tooltip = page.locator('.tooltip.show')
     await expect(tooltip).toBeVisible()
 
-    const tooltipLink = tooltip.getByRole('link', { name: tooltipElementText })
+    const tooltipLink = tooltip.getByRole('link', { name: tooltipElementText, exact: true })
     await expect(tooltipLink).toBeVisible()
     await expect(tooltipLink).toHaveAttribute('href', tooltipElementHref)
 
